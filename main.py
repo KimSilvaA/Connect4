@@ -1,5 +1,5 @@
 import pygame
-#from game import Connect4
+from game import Connect4
 
 def main():
     pygame.init()
