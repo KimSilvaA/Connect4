@@ -141,7 +141,7 @@ class Board:
             best_column = random.choice(valid_locations)
             for column in valid_locations:
                 row = self.next_open_row(board, column)
-                temp_board = board.copy()
+                temp_board = np.copy(board)
                 self.drop_piece(temp_board, row, column, self.comp)
                 new_score = self.minimax(temp_board, depth - 1, alpha, beta, False)[1]
                 if new_score > value:
