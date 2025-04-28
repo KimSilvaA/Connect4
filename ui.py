@@ -42,8 +42,24 @@ class UI:
 
         # initialize font and text 
         self.font = pygame.font.SysFont(None, 36)
-        self.message = ""
+        self.message = "" 
 
+        self.hint_column = None
+        self.hint_button_rect = pygame.Rect(20, 20, 100, 40) 
+
+        # screen 
+        # Update the screen width to include space for the hint button
+        screen_width = self.column_count * self.token_size + 1000  # Add extra space for hint button
+        screen_height = self.row_count * self.token_size  # Keep the board height the same
+        self._display_surf = pygame.display.set_mode((screen_width, screen_height))
+
+            
+        hint_button_width = 100  # Width of the hint button
+        hint_button_height = 50  # Height of the hint button
+        hint_button_x = self.column_count * self.token_size -10  # Positioned in the white space
+        hint_button_y=10
+
+        self.hint_button_rect = pygame.Rect(hint_button_x, hint_button_y, hint_button_width, hint_button_height)
 
 # # =========== Main Game Functions =========== # # 
     def on_execute(self):
@@ -54,7 +70,9 @@ class UI:
             alpha = -math.inf
             beta = math.inf
             pygame.init()
-            width = self.column_count * self.token_size
+            hint_button_space = 100  # Additional space on the right for the hint button
+            width = self.column_count * self.token_size + hint_button_space  # Add space for the hint button
+            # width = self.column_count * self.token_size
             height = (self.row_count + 1) * self.token_size
             self._display_surf = pygame.display.set_mode((width, height))
 
@@ -68,7 +86,7 @@ class UI:
                 
                 # if computer's turn 
                 if self.board.current_player != self.board.human:
-                    pygame.time.delay(100) 
+                    pygame.time.delay(200) 
                     col, minimax_score = self.board.minimax(self.board.board, depth, alpha,beta, True)
                     
                     if self.board.check_valid_location(self.board.board, col):
@@ -84,10 +102,6 @@ class UI:
                         else:
                             self.board.switch_player() 
                         
-                    
-                    
-
-
 
     def on_render(self):
         '''
@@ -95,6 +109,7 @@ class UI:
         '''
         self._display_surf.fill((255, 255, 255))
         self.draw_board(self._display_surf)
+        self.draw_hint_button(self._display_surf)  # Draw the hint button
         self.display_token()
         self.update_turn_message()
         self.display_turn()
@@ -104,27 +119,30 @@ class UI:
 
 # # =========== Drawing Functions =========== # # 
     def draw_board(self, screen):
-        
-        # Draw the blue board 
+        # hint_button_space = 200  # Space for the hint button on the right
+        board_width = self.column_count * self.token_size
+        board_height = self.row_count * self.token_size
+
+        # Draw the blue board
         pygame.draw.rect(
             screen,
             (0, 0, 255),  # Blue color
-            (0,  # Upper left corner
-            self.token_size,  # Upper right corner
-            self.column_count * self.token_size,  # Width (basically makes all the columns)
-            self.row_count * self.token_size)  # Height 
+            (0,  # Upper left corner X
+            self.token_size,  # Upper left corner Y
+            board_width,  # Adjusted width for the board
+            board_height)  # Height remains unchanged
         )
 
-        # Draw empty slots 
-        for row in range(self.row_count):  
-            for col in range(self.column_count):  
-                piece = int(self.board.board[row][col])  # Get the value from the board grid, initialized to 0 
+        # Draw empty slots
+        for row in range(self.row_count):
+            for col in range(self.column_count):
+                piece = int(self.board.board[row][col])  # Get the value from the board grid
                 pygame.draw.circle(
-                    screen,  
-                    self.colors[piece],  # set token color based on token 
+                    screen,
+                    self.colors[piece],  # Token color based on value
                     (int(col * self.token_size + self.token_size / 2),  # X position
-                    int((self.row_count - row - 1) * self.token_size + self.token_size / 2 + self.token_size)),  # Y position, defined as such so token goes to bottom
-                    int(self.token_size/2 - 5) #radius 
+                    int((self.row_count - row - 1) * self.token_size + self.token_size / 2 + self.token_size)),  # Y position
+                    int(self.token_size / 2 - 5)  # Radius
                 )
 
     def draw_token(self, column):
@@ -143,14 +161,35 @@ class UI:
             (token_x, token_y),  # Token position (x and y)
             int(self.token_size / 2 - 5)  # Radius of the token (circle size)
         )
+    
+
+    def draw_hint_button(self, screen):
+        pygame.draw.rect(screen, (200, 200, 200), self.hint_button_rect)  # Light grey
+        pygame.draw.rect(screen, (100, 100, 100), self.hint_button_rect, 2)  # Border
+        text = self.font.render("Hint", True, (0, 0, 0))
+        text_rect = text.get_rect(center=self.hint_button_rect.center)
+        screen.blit(text, text_rect)
+
 
     # # =========== Functions to handle input =========== # # 
         '''
         functions to handle mouse clicking, moving etc
         '''
+    # def handle_mouse_motion(self, pos):
+    #     self.mouse_x, _ = pos
+    #     self.mouse_column = self.mouse_x // self.token_size
+
     def handle_mouse_motion(self, pos):
         self.mouse_x, _ = pos
-        self.mouse_column = self.mouse_x // self.token_size
+        hint_button_space = 200  # Space reserved for the hint button
+        board_width = self.column_count * self.token_size  # Width of the board
+
+        # Check if the mouse is within the board's width
+        if self.mouse_x < board_width:
+            self.mouse_column = self.mouse_x // self.token_size
+            self.show_hover_token = True  # Show the token
+        else:
+            self.show_hover_token = False  # Hide the token
 
      # Handle mouse click to drop a token
     def handle_mouse_click(self, pos):
@@ -202,6 +241,7 @@ class UI:
             if self.board.current_player == self.board.human:
                 self.draw_token(self.mouse_column)
     
+
 
 # # =========== Run Game =========== # #
 
