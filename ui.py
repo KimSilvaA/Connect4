@@ -43,6 +43,7 @@ class UI:
         # initialize font and text 
         self.font = pygame.font.SysFont(None, 36)
         self.message = "" 
+        self.winner_message = ""
 
         self.hint_column = None
         self.hint_button_rect = pygame.Rect(20, 20, 100, 40) 
@@ -63,46 +64,54 @@ class UI:
 
 # # =========== Main Game Functions =========== # # 
     def on_execute(self):
-            '''
-            game logic 
-            '''
-            depth = 4
-            alpha = -math.inf
-            beta = math.inf
-            pygame.init()
-            hint_button_space = 100  # Additional space on the right for the hint button
-            width = self.column_count * self.token_size + hint_button_space  # Add space for the hint button
-            # width = self.column_count * self.token_size
-            height = (self.row_count + 1) * self.token_size
-            self._display_surf = pygame.display.set_mode((width, height))
+        '''
+        Game logic 
+        '''
+        depth = 4
+        alpha = -math.inf
+        beta = math.inf
+        pygame.init()
+        hint_button_space = 100  # Additional space on the right for the hint button
+        width = self.column_count * self.token_size + hint_button_space  # Add space for the hint button
+        height = (self.row_count + 1) * self.token_size
+        self._display_surf = pygame.display.set_mode((width, height))
 
-            board_arr=self.board.board 
-            pygame.display.set_caption("Connect 4")
+        pygame.display.set_caption("Connect 4")
 
+        while self.running:
+            self.handle_events()  # Handle user input
+            self.on_render()  # Render the game state
 
-            while self.running:
-                self.handle_events()  # Handle user input
-                self.on_render()  # Render the game state
-                
-                # if computer's turn 
-                if self.board.current_player != self.board.human:
-                    pygame.time.delay(200) 
-                    col, minimax_score = self.board.minimax(self.board.board, depth, alpha,beta, True)
-                    
-                    if self.board.check_valid_location(self.board.board, col):
-                        row = self.board.next_open_row(self.board.board, col)
-                        self.board.drop_piece(self.board.board, row, col, self.board.current_player)
-                         # After the AI's move, check for a win or tie
-                        if self.board.check_for_win(self.board.board, self.board.current_player):
-                            #display a win message 
-                            self.running = False  # End the game loop
-                        elif self.board.is_tie(self.board.board):
-                            #display a tie message
-                            self.running = False  # End the game loop
-                        else:
-                            self.board.switch_player() 
-                        
+            # If it's the computer's turn
+            if self.board.current_player != self.board.human:
+                pygame.time.delay(200) 
+                col, _ = self.board.minimax(self.board.board, depth, alpha, beta, True)
 
+                if self.board.check_valid_location(self.board.board, col):
+                    row = self.board.next_open_row(self.board.board, col)
+                    self.board.drop_piece(self.board.board, row, col, self.board.current_player)
+                    self.on_render()  # Render after the computer's move
+                    pygame.display.flip()  # Update display
+
+                    # After the AI's move, check for a win or tie
+                    if self.board.check_for_win(self.board.board, self.board.current_player):
+                        # Display a win message 
+                        self.winner_message = "Computer wins!"
+                        self.running = False  # End the game loop
+                        pygame.time.delay(500)
+                        print("Computer wins!")
+                    elif self.board.is_tie(self.board.board):
+                        self.winner_message = "It's a tie!"
+                        self.running = False  # End the game loop
+                    else:
+                        self.board.switch_player()  # Switch to the other player
+
+        # Once the game ends, display the winner message
+        if self.winner_message:
+            self.on_render()  # Render the winner message after the game ends
+            pygame.display.flip()  # Ensure the screen updates to show the winner message
+            pygame.time.delay(2000)
+    
     def on_render(self):
         '''
         show whatever is happening 
@@ -113,8 +122,8 @@ class UI:
         self.display_token()
         self.update_turn_message()
         self.display_turn()
-        
-        # self.show_turn() 
+        if self.winner_message:
+            self.display_winner()
         pygame.display.flip()
 
 # # =========== Drawing Functions =========== # # 
@@ -201,31 +210,49 @@ class UI:
         show turn, handle events, etc
         '''
 
+
     def handle_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
-            
-            # When the mouse is moving, update the hover token position
+
             if event.type == pygame.MOUSEMOTION:
                 self.handle_mouse_motion(event.pos)
-            
-            # Handle click events if it's the user's turn
+
             if self.board.current_player == self.board.human:
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     self.handle_mouse_click(event.pos)
-                    # Check if the clicked column is valid
+
                     if self.board.check_valid_location(self.board.board, self.mouse_column):
                         row = self.board.next_open_row(self.board.board, self.mouse_column)
                         self.board.drop_piece(self.board.board, row, self.mouse_column, self.board.current_player)
-                        self.show_hover_token=False #stop showing the token
-                        self.board.switch_player()
+                        self.show_hover_token = False  # Hide token preview
+
+                        self.on_render()
+                        pygame.display.update()
+
+                        if self.board.check_for_win(self.board.board, self.board.current_player):
+                            self.winner_message = "You win!"
+                            # self.display_winner()
+                            self.running = False
+                        elif self.board.is_tie(self.board.board):
+                            self.winner_message = "It's a tie!"
+                            # self.display_winner()
+                            self.running = False
+                        else:
+                            self.board.switch_player()
+
 
     
     
     def display_turn(self):
         text= self.font.render(self.message, True, (0, 0, 0)) 
         self._display_surf.blit(text, (self.token_size // 2, 0))
+    
+    def display_winner(self):
+        text = self.font.render(self.winner_message, True, (255, 0, 0)) 
+        text_rect = text.get_rect(center=(self._display_surf.get_width() // 2, text.get_height() // 2 + 10))
+        self._display_surf.blit(text, text_rect)
 
     def update_turn_message(self):
         if self.board.current_player == self.board.human:
@@ -241,7 +268,6 @@ class UI:
             if self.board.current_player == self.board.human:
                 self.draw_token(self.mouse_column)
     
-
 
 # # =========== Run Game =========== # #
 
