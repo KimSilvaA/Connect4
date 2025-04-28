@@ -21,9 +21,6 @@ class Board:
     def print_board(self, board):
         print(np.flip(board, 0))
 
-    # def check_valid_location(self, board, column):
-    #     return board[0, column] == 0
-    
     def check_valid_location(self, board, column):
         return board[self.row_count - 1][column] == 0
 
@@ -38,6 +35,7 @@ class Board:
 
     def switch_player(self):
         self.current_player = 2 if self.current_player == 1 else 1
+
 
     def check_for_win(self, board, piece):
         # Horizontal
@@ -227,3 +225,4 @@ def play_game():
 
 if __name__ == "__main__":
     play_game()
+# run this to play the game numpy style 

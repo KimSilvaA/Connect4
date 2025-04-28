@@ -2,7 +2,7 @@ import pygame
 from pygame.locals import *
 import sys
 
-class UI:
+class Connect4:
 
 
 
