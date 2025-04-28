@@ -178,9 +178,10 @@ class UI:
                     # Check if the clicked column is valid
                     if self.board.check_valid_location(self.board.board, self.mouse_column):
                         row = self.board.next_open_row(self.board.board, self.mouse_column)
-                        self.board.drop_piece(self.board.board, row, self.mouse_column, 1)
+                        self.board.drop_piece(self.board.board, row, self.mouse_column, self.board.current_player)
                         self.show_hover_token=False #stop showing the token
-                        self.board.switch_player() 
+                        self.board.switch_player()
+
     
     
     def display_turn(self):
