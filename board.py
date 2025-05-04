@@ -1,5 +1,4 @@
 import numpy as np
-import copy 
 import random
 import math
 
@@ -279,15 +278,77 @@ class MCTSNode:
             node.wins+=result
             result=-result #reverse the result because in each turn the player changes 
             node=node.parent #go from child to parent node 
-        
+    
+    def best_child(self):
+        '''
+        returns child node with highest wins per visit ratio 
+        '''
+        best_child=None
+        best_ratio=-math.inf
+        for child in self.children:
+            if child.visits>0:
+                ratio=child.wins/child.visits
+                if ratio>best_ratio:
+                    best_ratio=ratio
+                    best_child=child
+        return best_child  
+    
+    def select(self):
+        '''
+        Selects a child node to explore.
+        Uses a combination of win/visit ratio and exploration bonus.
+        '''
+        best_child = None
+        best_ratio = -math.inf
+        for child in self.children:
+            if child.visits > 0:
+                ratio = child.wins / child.visits 
+            else:
+                return child  # Prefer unvisited nodes immediately
+            if ratio > best_ratio:
+                best_ratio = ratio
+                best_child = child
+        return best_child
 
-        
+
+def mcts_search(board, max_iterations=100):
+    """
+    Runs the Monte Carlo Tree Search (MCTS) to determine the best column for the AI to play.
+    The result is the column that the AI should play.
+    """
+    root = MCTSNode(board)
+
+    for _ in range(max_iterations):
+        node = root
+        while node.is_fully_expanded() and node.children:
+            node = max(
+                node.children,
+                key=lambda child: child.wins / child.visits + math.sqrt(2 * math.log(node.visits) / child.visits)
+            )
+
+        # expansion: expand the node if explored
+        if not node.is_fully_expanded():
+            node = node.expand()
+        #simulate game
+        result = node.simulate()
+        # update node
+        node.backpropagation(node, result)
+    # Choose based on num of visits
+    best_child = max(root.children, key=lambda child: child.visits)
+    #finds column that changed from last time 
+    for col in range(board.column_count):
+        if not (board.board[:, col] == best_child.board.board[:, col]).all():
+            return col
+
+#==== Test MCTS ====#
 # test_board=Board()
 # test_node=MCTSNode(test_board)
-# new_board = test_node.expand()
-# # new_board.print_board()
 # a=test_node.simulate()
 # print(a)
+# col=mcts_search(test_board, max_iterations=1000)
+# print(col)
+
+
 
 
 
@@ -296,60 +357,60 @@ class MCTSNode:
 #==== Main Game Loop ====#
 # uncomment me for a text-based game! 
         
-def play_game():
-    depth = 4
-    alpha = -math.inf
-    beta = math.inf
-    game = Board()
-    game_over = False
+# def play_game():
+#     depth = 4
+#     alpha = -math.inf
+#     beta = math.inf
+#     game = Board()
+#     game_over = False
 
-    while not game_over:
-        game.print_board(game.board)
+#     while not game_over:
+#         game.print_board(game.board)
 
-        if game.player_turn():
-            try:
-                col = int(input("Player 1 Make your Selection (0-6): "))
-                if col not in range(game.column_count) or not game.check_valid_location(game.board, col):
-                    print(game.check_valid_location(game.board, col))
-                    print("check_valid_location is giving False") 
-                    print("Invalid move. Try again.")
-                    continue
-            except ValueError:
-                print("Please enter a number between 0 and 6.")
-                continue
+#         if game.player_turn():
+#             try:
+#                 col = int(input("Player 1 Make your Selection (0-6): "))
+#                 if col not in range(game.column_count) or not game.check_valid_location(game.board, col):
+#                     print(game.check_valid_location(game.board, col))
+#                     print("check_valid_location is giving False") 
+#                     print("Invalid move. Try again.")
+#                     continue
+#             except ValueError:
+#                 print("Please enter a number between 0 and 6.")
+#                 continue
 
-            row = game.next_open_row(game.board, col)
-            game.drop_piece(game.board, row, col, game.current_player)
+#             row = game.next_open_row(game.board, col)
+#             game.drop_piece(game.board, row, col, game.current_player)
 
-            if game.check_for_win(game.board, game.current_player):
-                game.print_board(game.board)
-                print("Human wins!")
-                game_over = True
-            elif game.is_tie(game.board):
-                game.print_board(game.board)
-                print("It's a tie!")
-                game_over = True
-            else:
-                game.switch_player()
-        else:
-            print("AI is thinking... ._.")
-            col, _ = game.minimax(game.board, depth, alpha, beta, True)
-            print(f"AI selects column {col}")
-            if game.check_valid_location(game.board, col):
-                row = game.next_open_row(game.board, col)
-                game.drop_piece(game.board, row, col, game.current_player)
+#             if game.check_for_win(game.board, game.current_player):
+#                 game.print_board(game.board)
+#                 print("Human wins!")
+#                 game_over = True
+#             elif game.is_tie(game.board):
+#                 game.print_board(game.board)
+#                 print("It's a tie!")
+#                 game_over = True
+#             else:
+#                 game.switch_player()
+#         else:
+#             print("AI is thinking... ._.")
+#             col, _ = game.minimax(game.board, depth, alpha, beta, True)
+#             print(f"AI selects column {col}")
+#             if game.check_valid_location(game.board, col):
+#                 row = game.next_open_row(game.board, col)
+#                 game.drop_piece(game.board, row, col, game.current_player)
 
-                if game.check_for_win(game.board, game.current_player):
-                    game.print_board(game.board)
-                    print("Computer wins!")
-                    game_over = True
-                elif game.is_tie(game.board):
-                    game.print_board(game.board)
-                    print("It's a tie!")
-                    game_over = True
-                else:
-                    game.switch_player()
+#                 if game.check_for_win(game.board, game.current_player):
+#                     game.print_board(game.board)
+#                     print("Computer wins!")
+#                     game_over = True
+#                 elif game.is_tie(game.board):
+#                     game.print_board(game.board)
+#                     print("It's a tie!")
+#                     game_over = True
+#                 else:
+#                     game.switch_player()
 
 
-if __name__ == "__main__":
-    play_game()
+# if __name__ == "__main__":
+#     play_game()

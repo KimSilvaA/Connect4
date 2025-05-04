@@ -1,7 +1,8 @@
 import pygame
 from pygame.locals import *
 import sys
-from board import Board 
+from board import Board
+# from board import Board,MCTSNode, mcts_search
 import math 
 import numpy as np
 
@@ -45,22 +46,21 @@ class UI:
         self.message = "" 
         self.winner_message = ""
 
-        self.hint_column = None
-        self.hint_button_rect = pygame.Rect(20, 20, 100, 40) 
+        # self.hint_column = None
+        # self.hint_button_rect = pygame.Rect(20, 20, 100, 40) 
 
-        # screen 
-        # Update the screen width to include space for the hint button
+        #screen: board on left hint button on right 
         screen_width = self.column_count * self.token_size + 1000  # Add extra space for hint button
         screen_height = self.row_count * self.token_size  # Keep the board height the same
         self._display_surf = pygame.display.set_mode((screen_width, screen_height))
 
             
-        hint_button_width = 100  # Width of the hint button
-        hint_button_height = 50  # Height of the hint button
-        hint_button_x = self.column_count * self.token_size -10  # Positioned in the white space
-        hint_button_y=10
+        # hint_button_width = 100  # Width of the hint button
+        # hint_button_height = 50  # Height of the hint button
+        # hint_button_x = self.column_count * self.token_size -10  # Positioned in the white space
+        # hint_button_y=10
 
-        self.hint_button_rect = pygame.Rect(hint_button_x, hint_button_y, hint_button_width, hint_button_height)
+        # self.hint_button_rect = pygame.Rect(hint_button_x, hint_button_y, hint_button_width, hint_button_height)
 
 # # =========== Main Game Functions =========== # # 
     def on_execute(self):
@@ -118,7 +118,7 @@ class UI:
         '''
         self._display_surf.fill((255, 255, 255))
         self.draw_board(self._display_surf)
-        self.draw_hint_button(self._display_surf)  # Draw the hint button
+        # self.draw_hint_button(self._display_surf)  # Draw the hint button
         self.display_token()
         self.update_turn_message()
         self.display_turn()
@@ -172,12 +172,12 @@ class UI:
         )
     
 
-    def draw_hint_button(self, screen):
-        pygame.draw.rect(screen, (200, 200, 200), self.hint_button_rect)  # Light grey
-        pygame.draw.rect(screen, (100, 100, 100), self.hint_button_rect, 2)  # Border
-        text = self.font.render("Hint", True, (0, 0, 0))
-        text_rect = text.get_rect(center=self.hint_button_rect.center)
-        screen.blit(text, text_rect)
+    # def draw_hint_button(self, screen):
+    #     pygame.draw.rect(screen, (200, 200, 200), self.hint_button_rect)  # Light grey
+    #     pygame.draw.rect(screen, (100, 100, 100), self.hint_button_rect, 2)  # Border
+    #     text = self.font.render("Hint", True, (0, 0, 0))
+    #     text_rect = text.get_rect(center=self.hint_button_rect.center)
+    #     screen.blit(text, text_rect)
 
 
     # # =========== Functions to handle input =========== # # 
@@ -202,13 +202,20 @@ class UI:
 
      # Handle mouse click to drop a token
     def handle_mouse_click(self, pos):
-        _, y = pos
+        x, y = pos
+        # if self.hint_button_rect.collidepoint(x,y):
+        #     self.show_hint()
+        #     return 
         self.mouse_column = self.mouse_x // self.token_size
+
+
+
                     
     # # =========== Helper functions =========== # # 
         '''
         show turn, handle events, etc
         '''
+
 
 
     def handle_events(self):
@@ -267,6 +274,19 @@ class UI:
         if self.show_hover_token:
             if self.board.current_player == self.board.human:
                 self.draw_token(self.mouse_column)
+    
+    # def show_hint(self):
+    #     '''
+    #     function to show hint for the player 
+    #     '''
+    #     if self.board.current_player == self.board.human:
+    #         # Use MCTS to find the best move
+    #         best_move = mcts_search(self.board, 1000)
+            
+
+        
+
+
     
 
 # # =========== Run Game =========== # #
