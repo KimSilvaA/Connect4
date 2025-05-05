@@ -1,10 +1,13 @@
 import pygame
-from game import Connect4
+from board import Board
+from ui import UI
 
 def main():
-    pygame.init()
-    game=Connect4()
-    game.run()
+    pygame.init()  
+    board = Board()  
+    ui = UI(board)  
+    ui.on_execute()  
+    pygame.quit()
 
 if __name__ == "__main__":
     main()
