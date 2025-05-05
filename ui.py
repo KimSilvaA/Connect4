@@ -67,11 +67,12 @@ class UI:
         '''
         Game logic 
         '''
-        depth = 4
+        depth = 3
         alpha = -math.inf
         beta = math.inf
         pygame.init()
-        hint_button_space = 100  # Additional space on the right for the hint button
+        hint_button_space = 0 
+        # hint_button_space = 100  # Additional space on the right for the hint button
         width = self.column_count * self.token_size + hint_button_space  # Add space for the hint button
         height = (self.row_count + 1) * self.token_size
         self._display_surf = pygame.display.set_mode((width, height))
@@ -110,7 +111,7 @@ class UI:
         if self.winner_message:
             self.on_render()  # Render the winner message after the game ends
             pygame.display.flip()  # Ensure the screen updates to show the winner message
-            pygame.time.delay(2000)
+            pygame.time.delay(5000)
     
     def on_render(self):
         '''
